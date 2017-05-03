@@ -21,8 +21,8 @@ with tf.Session() as sess:
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
     try:
         while not coord.should_stop():
-            test_image, test_label = sess.run([image_batch, label_batch])
-            print test_image, test_label
+            test_one_hot, test_number = sess.run([one_hot_batch, number_batch])
+            print test_one_hot, test_number
             import time
             time.sleep(5)
     except tf.errors.OutOfRangeError as e:
