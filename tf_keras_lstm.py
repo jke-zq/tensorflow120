@@ -59,6 +59,13 @@ def load_data(origin_path, path='./imdb.npz', num_words=None, skip_top=0,
     # path = get_file(path,
     #                 origin=origin_path,
     #                 file_hash='599dadb1135973df5b59232a0e9a887c')
+    # load hdfs file to local disk
+    if origin_path.startswith('hdfs://'):
+        with tf.gfile.Open(origin_path, 'rb') as from_file:
+            with open(path, 'wb') as to_file:
+                to_file.write(from_file.read())
+    else:
+        path = origin_path
     with np.load(path) as f:
         x_train, labels_train = f['x_train'], f['y_train']
         x_test, labels_test = f['x_test'], f['y_test']
