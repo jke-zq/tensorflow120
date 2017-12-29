@@ -190,6 +190,7 @@ def main(_):
         sv = tf.train.Supervisor(
             is_chief=is_chief,
             init_op=init_op,
+            logdir=FLAGS.model_dir,
             recovery_wait_secs=1,
             global_step=global_step)
 
@@ -206,8 +207,8 @@ def main(_):
 
         print("Worker %d: Session initialization complete." % FLAGS.task_index)
         # start queue runner
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        # coord = tf.train.Coordinator()
+        # threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         if is_chief:
             sv.start_queue_runners(sess, [chief_queue_runner])
             sess.run(sync_init_op)
@@ -218,15 +219,15 @@ def main(_):
             print('=======================================')
             loss_1, loss_2, _, step, labels_1, labels_2 = sess.run(loss_list + [train_step, global_step] + train_labels_list)
             print('global_step:%s, cost_time:%s, loss:%s-%s, ====data:%s-%s' % (step, time.time() - b_time, loss_1, loss_2, labels_1, labels_2))
-            if step > FLAGS.total_step:
+            if step >= FLAGS.total_step:
                 break
 
         print("accuracy: ", sess.run(accuracy))
         sess.run(kill_ps_enqueue_op)
         print 'kill_ps_enqueue_op done....'
-        coord.request_stop()
-        coord.join(threads)
-        sv.stop()
+        # coord.request_stop()
+        # coord.join(threads)
+    sv.stop()
 
 if __name__ == '__main__':
     tf.app.run(main=main)
