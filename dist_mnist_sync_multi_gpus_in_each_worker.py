@@ -33,7 +33,7 @@ flags.DEFINE_string("worker_hosts", "localhost:2223,localhost:2224",
 flags.DEFINE_string("job_name", None, "job name: worker or ps")
 
 FLAGS = flags.FLAGS
-
+assert tf.__version__ == '1.1.0', ('This code requires TensorFlow v1.1, You have:%s' % tf.__version__)
 
 IMAGE_PIXELS = 28
 
