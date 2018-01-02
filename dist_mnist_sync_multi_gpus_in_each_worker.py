@@ -59,8 +59,8 @@ def read_image(file_queue):
 def read_image_batch(file_queue, batch_size):
     img, label = read_image(file_queue)
     capacity = 1000 * batch_size
-    # image_batch, label_batch = tf.train.shuffle_batch([img, label], batch_size=batch_size, capacity=capacity, min_after_dequeue=0)
-    image_batch, label_batch = tf.train.batch([img, label], batch_size=batch_size)
+    image_batch, label_batch = tf.train.shuffle_batch([img, label], batch_size=batch_size, capacity=capacity, min_after_dequeue=0)
+    # image_batch, label_batch = tf.train.batch([img, label], batch_size=batch_size)
     one_hot_labels = tf.to_float(tf.one_hot(label_batch, 10, 1, 0))
     return image_batch, one_hot_labels
 
