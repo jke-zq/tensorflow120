@@ -8,7 +8,7 @@ import skimage.io
 import skimage.transform
 
 flags = tf.app.flags
-flags.DEFINE_string("imag_path", '.', "Path for the image")
+flags.DEFINE_string("image_path", '.', "Path for the image")
 
 FLAGS = flags.FLAGS
 
@@ -64,7 +64,7 @@ def main(_):
     vgg = vgg16.Vgg16()
     vgg.build(input_)
     with tf.Session() as sess:
-        img = load_image(FLAGS.imag_path)
+        img = load_image(FLAGS.image_path)
         img = img.reshape((1, 224, 224, 3))
 
         feed_dict = {input_: img}
