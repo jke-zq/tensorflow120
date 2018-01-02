@@ -20,7 +20,7 @@ Process the photo files to tfrecords
 ```shell
 python image_processing.py
 ```
-#### step3:
+#### step2:
 Train the model
 
 ~~~shell
