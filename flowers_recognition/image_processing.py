@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 
 import tensorflow as tf
 import numpy as np
-from tensorflow_vgg import vgg16
+import vgg16
 
 import skimage
 import skimage.io
@@ -112,11 +113,12 @@ contents = os.listdir(data_dir)
 classes = [each for each in contents if os.path.isdir(data_dir + each)]
 
 # Set the batch size higher if you can fit in in your GPU memory
-batch_size = 10
+batch_size = 8
 b_imgs = []
 lables = []
 codes = None
 r_label, r_code = read_tfrecord(tfrecord_file)
+btime = time.time()
 with tf.Session() as sess:
     vgg = vgg16.Vgg16()
     input_ = tf.placeholder(tf.float32, [None, 224, 224, 3])
@@ -142,8 +144,9 @@ with tf.Session() as sess:
                 else:
                     codes = np.concatenate((codes, b_codes))
                 b_imgs = []
+                print('Have processed %s images, cost time:%s secs'
+                      % (ii + 1, time.time() - btime))
 
     print(len(lables), codes.shape)
     write_to_tfrecord(codes[:-100], lables[:-100], tfrecord_file + '_train')
     write_to_tfrecord(codes[-100:], lables[-100:], tfrecord_file + '_test')
-

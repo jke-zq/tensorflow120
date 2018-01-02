@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
-from tensorflow_vgg import vgg16
+import vgg16
 
 import skimage
 import skimage.io
