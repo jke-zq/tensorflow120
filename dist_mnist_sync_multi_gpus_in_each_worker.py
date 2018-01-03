@@ -206,9 +206,6 @@ def main(_):
         sess = sv.prepare_or_wait_for_session(server.target, config=sess_config)
 
         print("Worker %d: Session initialization complete." % FLAGS.task_index)
-        # start queue runner
-        # coord = tf.train.Coordinator()
-        # threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         if is_chief:
             sv.start_queue_runners(sess, [chief_queue_runner])
             sess.run(sync_init_op)
@@ -225,8 +222,6 @@ def main(_):
         print("accuracy: ", sess.run(accuracy))
         sess.run(kill_ps_enqueue_op)
         print 'kill_ps_enqueue_op done....'
-        # coord.request_stop()
-        # coord.join(threads)
     sv.stop()
 
 if __name__ == '__main__':
