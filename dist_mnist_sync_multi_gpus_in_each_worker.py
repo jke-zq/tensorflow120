@@ -221,7 +221,7 @@ def main(_):
 
         print("accuracy: ", sess.run(accuracy))
         sess.run(kill_ps_enqueue_op)
-        print 'kill_ps_enqueue_op done....'
+        print('kill_ps_enqueue_op done....')
     sv.stop()
 
 if __name__ == '__main__':
