@@ -2,6 +2,7 @@
 
 import os
 import time
+import random
 
 import tensorflow as tf
 import numpy as np
@@ -57,13 +58,12 @@ def _float_feature(value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
-def write_to_tfrecord(codes, labels, tfrecord_file):
+def write_to_tfrecord(indexes, codes, labels, tfrecord_file):
     """ This example is to write a sample to TFRecord file. If you want to write
     more samples, just use a loop.
     """
     writer = tf.python_io.TFRecordWriter(tfrecord_file)
-    length = len(codes)
-    for ith in range(length):
+    for ith in indexes:
         code, label = codes[ith], LABEL_INDEX_MAP[labels[ith]]
         example = tf.train.Example(features=tf.train.Features(feature={
             'label': _int64_feature(label),
@@ -148,5 +148,8 @@ with tf.Session() as sess:
                       % (ii + 1, time.time() - btime))
 
     print(len(lables), codes.shape)
-    write_to_tfrecord(codes[:-100], lables[:-100], tfrecord_file + '_train')
-    write_to_tfrecord(codes[-100:], lables[-100:], tfrecord_file + '_test')
+    length = len(codes)
+    indexes = range(length)
+    random.shuffle(indexes)
+    write_to_tfrecord(indexes[:-100], codes, lables, tfrecord_file + '_train')
+    write_to_tfrecord(indexes[-100:], codes, lables, tfrecord_file + '_test')
