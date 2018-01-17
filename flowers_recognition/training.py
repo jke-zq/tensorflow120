@@ -62,8 +62,8 @@ def create_validate_input_fun(input_fun):
     with tf.train.MonitoredTrainingSession() as sess:
         validate_code_vals, validate_label_vals = sess.run(
                 [validate_codes, validate_labels])
-    print('validate labels:')
-    print(str(list(validate_label_vals)))
+    global test_labels
+    test_labels = list(validate_label_vals)
 
     def validate_input_fun():
         validate_dataset = tf.data.Dataset.from_tensor_slices(
@@ -100,8 +100,13 @@ def main(_):
         print("   {}, was: {}".format(key, evaluate_result[key]))
 
     predict_results = classifier.predict(input_fn=validate_input_fun)
-    print("Predictions:")
-    print(list(map(lambda x: x["class_ids"][0], predict_results)))
+    predictions = list(map(lambda x: x["class_ids"][0], predict_results))
+    print('Test Predictions', str(predictions))
+    global test_labels
+    print('Test Labels', str(test_labels))
+    counts = sum(map(lambda x: x[0] == x[1], zip(test_labels, predictions)))
+    accu = 1.0 * counts / len(predictions)
+    print('Test Accuracy:%s' % accu)
 
 
 def test_main(_):
@@ -115,6 +120,8 @@ def test_main(_):
     print(validate_label_vals)
     print(validate_image_vals)
 
+test_labels = None
 
 if __name__ == '__main__':
+
     tf.app.run(main=main)
