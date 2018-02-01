@@ -43,6 +43,3 @@ Dataset API 已从 tf.contrib.data 迁移到核心软件包 tf.data 中。1.4 �
 
 TensorBoard查看：
 <img src="https://s3.meituan.net/v1/mss_0e5a0056f3b64f79aa4749ffa68ce372/cms001/estimator_tensorboard-1513336314785.png">
-
-# 更多帮助
-在使用过程中如果遇到问题，您可以提交工单咨询，或者加入用户交流QQ群：661657497寻求帮助

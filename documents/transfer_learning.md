@@ -141,8 +141,5 @@ python image_processing.py
 
 **祝您TensorFlow之旅愉快，祝好！**
 
-# 更多帮助
-在使用过程中如果遇到问题，您可以提交工单咨询，或者加入用户交流 QQ 群：661657497 寻求帮助
-
 # 参考
 1. [agoila/transfer-learning](https://github.com/agoila/transfer-learning)
