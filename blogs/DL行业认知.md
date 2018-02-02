@@ -37,21 +37,23 @@
 ## 模型部署
 训练好的模型总要部署到线上，但是部署在 server 后端，还是移动终端是一个选择问题，但是需求都强烈。    
 TensorFlow lite 正在解决模型部署到移动端的问题。    
-TensorFlow Serving 在解决模型部署 server 后端的问题。
-部署的问题主要在于性能问题，如果部署在移动终端还有大小问题。    
+TensorFlow Serving 在解决模型部署 server 后端的问题。    
+部署的问题主要在于性能问题，如果部署在移动终端还有模型文件的大小问题。    
 [TensorFlow模型压缩和Inference加速](https://zhuanlan.zhihu.com/p/31023153)
 
 ### inference加速
 主要是深度学习模型的计算力需求太大了，尤其是 CNN 。一般来说计算力主要来自 CNN 。    
-解决的方法有：    
-”Pruning是模型压缩的常用手段，通过设置一个threshold，通过剪枝权重低于threshold的连接，并通过fine-tuning减少精度损失。这样得到一个非常稀疏的模型。    
-另一种手段是替换全连接层。最新的网络如GoogLeNet和ResNet已经不使用全连接层，取而代之的是global average pooling层。我们参照[3]对VGG 16使用global average pooling层替换全连接层，并使用10个epoch finetune，模型参数压缩为原来的十分之一，分类精度并未下降。“    
+”Inference加速的手段有parameter quantization（如BinaryNet），Low-rank approximation，filter-level pruning。filter-level pruning有很多优点，通过裁剪整个filter，不该变原来的网络架构，也不需要额外的DL库支持，并且能减少内存占用，并且能和parameter quantization，Low-rank approximation并用。最近看到2篇filter level pruning的论文，来自Megvii的[2]，来自南京大学的lamda实验室[3]。    
+[2]和[3]的方法非常类似，都是把每一层卷积看作线性变换，用特征选择方法，裁剪channel。其中[2]使用LASSO做特征选择，[3]使用贪婪算法。“    
+   
 最近，Uber提出SBNet 。    
 [利用激活的稀疏性加速卷积网络](https://mp.weixin.qq.com/s?__biz=MzA3MzI4MjgzMw==&mid=2650736316&idx=4&sn=5aed5223f389a50bec0971bb2f189669&chksm=871ac2c2b06d4bd42c53ad3aa09d6409df21399fb2e0ea480f37c4be392918fd340634fd9942#rd)
 
 ### 模型裁剪
-”Inference加速的手段有parameter quantization（如BinaryNet），Low-rank approximation，filter-level pruning。filter-level pruning有很多优点，通过裁剪整个filter，不该变原来的网络架构，也不需要额外的DL库支持，并且能减少内存占用，并且能和parameter quantization，Low-rank approximation并用。最近看到2篇filter level pruning的论文，来自Megvii的[2]，来自南京大学的lamda实验室[3]。    
-[2]和[3]的方法非常类似，都是把每一层卷积看作线性变换，用特征选择方法，裁剪channel。其中[2]使用LASSO做特征选择，[3]使用贪婪算法。“
+主要是深度学习模型的参数太多，尤其是 FNN 。一般来说参数主要来自 FNN （全连接）。    
+”Pruning是模型压缩的常用手段，通过设置一个threshold，通过剪枝权重低于threshold的连接，并通过fine-tuning减少精度损失。这样得到一个非常稀疏的模型。    
+另一种手段是替换全连接层。最新的网络如GoogLeNet和ResNet已经不使用全连接层，取而代之的是global average pooling层。我们参照[3]对VGG 16使用global average pooling层替换全连接层，并使用10个epoch finetune，模型参数压缩为原来的十分之一，分类精度并未下降。“ 
+
 
 ## 深度学习平台
 目前各个公司都在开发部署自己的深度学习平台，因为深度学习对于计算力的需求很强。公司内部有统一的平台能够提高资源利用度（GPU 很贵的），镜像管理（大大减少运维部署），模型统一管理，数据特征提取与存储等。    
