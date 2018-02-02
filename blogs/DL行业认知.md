@@ -36,6 +36,8 @@
 
 ## 模型部署
 训练好的模型总要部署到线上，但是部署在 server 后端，还是移动终端是一个选择问题，但是需求都强烈。    
+TensorFlow lite 正在解决模型部署到移动端的问题。    
+TensorFlow Serving 在解决模型部署 server 后端的问题。
 部署的问题主要在于性能问题，如果部署在移动终端还有大小问题。    
 [TensorFlow模型压缩和Inference加速](https://zhuanlan.zhihu.com/p/31023153)
 
