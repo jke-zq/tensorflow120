@@ -9,8 +9,8 @@ assert tf.__version__ >= '1.4.0', ('This code requires TensorFlow v1.4, '
                                   'You have:%s' % tf.__version__)
 
 flags = tf.app.flags
-flags.DEFINE_string("train_tfrecords", 'train.tfrecords', "Path for the train tfrecords file")
-flags.DEFINE_string("test_tfrecords", 'test.tfrecords', "Path for the train tfrecords file")
+flags.DEFINE_string("train_tfrecords", './raw_data/train.tfrecords', "Path for the train tfrecords file")
+flags.DEFINE_string("test_tfrecords", './raw_data/test.tfrecords', "Path for the train tfrecords file")
 
 FLAGS = flags.FLAGS
 
@@ -34,17 +34,14 @@ def parser(serialized_example):
 
 
 def create_input_fun(file_path, batch_size=64, perform_shuffle=True,
-                     shuffle_window=1024, repeat_count=None):
+                     shuffle_window=1024, repeat_count=1):
     def input_fun():
         dataset = tf.data.TFRecordDataset([file_path])
         dataset = dataset.map(parser)
         if perform_shuffle:
             dataset = dataset.shuffle(buffer_size=shuffle_window)
         dataset = dataset.batch(batch_size)
-        if repeat_count is not None:
-            dataset = dataset.repeat(repeat_count)
-        else:
-            dataset = dataset.repeat()
+        dataset = dataset.repeat(repeat_count)
         iterator = dataset.make_one_shot_iterator()
         image_batch, label_batch = iterator.get_next()
         return image_batch, label_batch
@@ -81,7 +78,7 @@ def main(_):
         model_dir='./estimator_model_dir')
     train_input_fun = create_input_fun(FLAGS.train_tfrecords, repeat_count=2)
     classifier.train(input_fn=train_input_fun)
-    test_input_fun = create_input_fun(FLAGS.test_tfrecords, repeat_count=1, perform_shuffle=False)
+    test_input_fun = create_input_fun(FLAGS.test_tfrecords, perform_shuffle=False)
     validate_input_fun = create_validate_input_fun(test_input_fun)
     evaluate_result = classifier.evaluate(input_fn=test_input_fun)
     print("Evaluation results:")
