@@ -41,7 +41,7 @@ TensorFlow Serving 在解决模型部署 server 后端的问题。
 部署的问题主要在于性能问题，如果部署在移动终端还有模型文件的大小问题。    
 [TensorFlow模型压缩和Inference加速](https://zhuanlan.zhihu.com/p/31023153)
 
-### inference加速
+### Inference加速
 主要是深度学习模型的计算力需求太大了，尤其是 CNN 。一般来说计算力主要来自 CNN 。    
 ”Inference加速的手段有parameter quantization（如BinaryNet），Low-rank approximation，filter-level pruning。filter-level pruning有很多优点，通过裁剪整个filter，不该变原来的网络架构，也不需要额外的DL库支持，并且能减少内存占用，并且能和parameter quantization，Low-rank approximation并用。最近看到2篇filter level pruning的论文，来自Megvii的[2]，来自南京大学的lamda实验室[3]。    
 [2]和[3]的方法非常类似，都是把每一层卷积看作线性变换，用特征选择方法，裁剪channel。其中[2]使用LASSO做特征选择，[3]使用贪婪算法。“    
@@ -66,3 +66,8 @@ TensorFlow Serving 在解决模型部署 server 后端的问题。
 然而，并不是所有项目的数据都可以预处理成相同的形状和尺寸。例如自然语言处理中的语法解析树，源代码中的抽象语法树，以及网页中的DOM树等，形状的不同本身就是非常重要的特征，不可剥离。     
 这样一来，对于每一个样例，我们都需要一个新的计算图，这种问题我们需要使用构建动态计算图的能力才能够解决。这种问题我们可以叫它多结构输入问题。    
 [以静制动的TensorFlow Fold](https://zhuanlan.zhihu.com/p/25216368)
+
+## 模型解释
+深度学习训练出的模型都市“黑箱”，即没有可解释性。虽然我们应该对模型更有信心，不需要完全理解、甚至也无法完全理解模型，但是能对模型做出某种程度的解释也是大有裨益的。    
+能从模型中学到经验知识。倘若发现“黑箱”的奥秘，我们就可以移花接木的运用了。    
+能帮助修改模型。如果发现“黑箱”使用了错误的经验知识，那么我们可以调整模型，让模型避免误区。
