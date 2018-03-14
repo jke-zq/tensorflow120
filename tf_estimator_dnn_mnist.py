@@ -9,8 +9,10 @@ assert tf.__version__ >= '1.4.0', ('This code requires TensorFlow v1.4, '
                                   'You have:%s' % tf.__version__)
 
 flags = tf.app.flags
-flags.DEFINE_string("train_tfrecords", './raw_data/train.tfrecords', "Path for the train tfrecords file")
-flags.DEFINE_string("test_tfrecords", './raw_data/test.tfrecords', "Path for the train tfrecords file")
+flags.DEFINE_string("train_tfrecords", './raw_data/train.tfrecords',
+                    "Path for the train tfrecords file")
+flags.DEFINE_string("test_tfrecords", './raw_data/test.tfrecords',
+                    "Path for the train tfrecords file")
 
 FLAGS = flags.FLAGS
 
