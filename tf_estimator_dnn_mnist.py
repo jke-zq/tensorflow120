@@ -42,14 +42,17 @@ def create_input_fun(file_path, batch_size=64, perform_shuffle=True,
             dataset = dataset.shuffle(buffer_size=shuffle_window)
         dataset = dataset.batch(batch_size)
         dataset = dataset.repeat(repeat_count)
-        iterator = dataset.make_one_shot_iterator()
-        image_batch, label_batch = iterator.get_next()
-        return image_batch, label_batch
+        # iterator = dataset.make_one_shot_iterator()
+        # image_batch, label_batch = iterator.get_next()
+        # return image_batch, label_batch
+        return dataset
+
     return input_fun
 
 
 def create_validate_input_fun(input_fun):
-    validate_images, validate_labels = input_fun()
+    validate_images, validate_labels = input_fun().make_one_shot_iterator(
+    ).get_next()
     with tf.train.MonitoredTrainingSession() as sess:
         validate_image_vals, validate_label_vals = sess.run([validate_images, validate_labels])
     print('validate labels:')
@@ -63,9 +66,11 @@ def create_validate_input_fun(input_fun):
         validate_dataset = validate_dataset.map(decode)
         validate_dataset = validate_dataset.batch(2)
         validate_dataset = validate_dataset.repeat(1)
-        iterator = validate_dataset.make_one_shot_iterator()
-        validate_image_batch = iterator.get_next()
-        return validate_image_batch, None
+        # iterator = validate_dataset.make_one_shot_iterator()
+        # validate_image_batch = iterator.get_next()
+        # return validate_image_batch, None
+        return validate_dataset
+
     return validate_input_fun
 
 
