@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 print(os.path.abspath(__file__))
 
 import tensorflow as tf
 
 assert tf.__version__ >= '1.4.0', ('This code requires TensorFlow v1.4, '
-                                  'You have:%s' % tf.__version__)
+                                   'You have:%s' % tf.__version__)
 
 flags = tf.app.flags
 flags.DEFINE_string("train_tfrecords", './raw_data/train.tfrecords',
@@ -16,17 +17,16 @@ flags.DEFINE_string("test_tfrecords", './raw_data/test.tfrecords',
 
 FLAGS = flags.FLAGS
 
-
 tf.logging.set_verbosity(tf.logging.DEBUG)
 
 
 def parser(serialized_example):
     features = tf.parse_single_example(
-        serialized_example,
-        features={
-            'image_raw': tf.FixedLenFeature([], tf.string),
-            'label': tf.FixedLenFeature([], tf.int64),
-        })
+            serialized_example,
+            features={
+                'image_raw': tf.FixedLenFeature([], tf.string),
+                'label': tf.FixedLenFeature([], tf.int64),
+            })
 
     image = tf.decode_raw(features['image_raw'], tf.uint8)
     image.set_shape([784])
@@ -56,15 +56,18 @@ def create_validate_input_fun(input_fun):
     validate_images, validate_labels = input_fun().make_one_shot_iterator(
     ).get_next()
     with tf.train.MonitoredTrainingSession() as sess:
-        validate_image_vals, validate_label_vals = sess.run([validate_images, validate_labels])
+        validate_image_vals, validate_label_vals = sess.run(
+                [validate_images, validate_labels])
     print('validate labels:')
     print(str(list(validate_label_vals)))
 
     def validate_input_fun():
-        validate_dataset = tf.data.Dataset.from_tensor_slices(validate_image_vals['image'])
+        validate_dataset = tf.data.Dataset.from_tensor_slices(
+                validate_image_vals['image'])
 
         def decode(image_raw):
             return {'image': image_raw}
+
         validate_dataset = validate_dataset.map(decode)
         validate_dataset = validate_dataset.batch(2)
         validate_dataset = validate_dataset.repeat(1)
@@ -79,13 +82,14 @@ def create_validate_input_fun(input_fun):
 def main(_):
     feature_columns = [tf.feature_column.numeric_column('image', shape=784)]
     classifier = tf.estimator.DNNClassifier(
-        feature_columns=feature_columns,
-        hidden_units=[784],
-        n_classes=10,
-        model_dir='./estimator_model_dir')
+            feature_columns=feature_columns,
+            hidden_units=[784],
+            n_classes=10,
+            model_dir='./estimator_model_dir')
     train_input_fun = create_input_fun(FLAGS.train_tfrecords, repeat_count=2)
     classifier.train(input_fn=train_input_fun)
-    test_input_fun = create_input_fun(FLAGS.test_tfrecords, perform_shuffle=False)
+    test_input_fun = create_input_fun(FLAGS.test_tfrecords,
+                                      perform_shuffle=False)
     validate_input_fun = create_validate_input_fun(test_input_fun)
     evaluate_result = classifier.evaluate(input_fn=test_input_fun)
     print("Evaluation results:")
@@ -95,6 +99,7 @@ def main(_):
     predict_results = classifier.predict(input_fn=validate_input_fun)
     print("Predictions:")
     print(list(map(lambda x: x["class_ids"][0], predict_results)))
+
 
 if __name__ == '__main__':
     tf.app.run(main=main)
