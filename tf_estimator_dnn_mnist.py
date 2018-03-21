@@ -79,13 +79,18 @@ def create_validate_input_fun(input_fun):
     return validate_input_fun
 
 
+def get_config():
+    return tf.estimator.RunConfig(save_summary_steps=1)
+
+
 def main(_):
     feature_columns = [tf.feature_column.numeric_column('image', shape=784)]
     classifier = tf.estimator.DNNClassifier(
             feature_columns=feature_columns,
             hidden_units=[784],
             n_classes=10,
-            model_dir='./estimator_model_dir')
+            model_dir='./estimator_model_dir',
+            config=get_config())
     train_input_fun = create_input_fun(FLAGS.train_tfrecords, repeat_count=2)
     classifier.train(input_fn=train_input_fun)
     test_input_fun = create_input_fun(FLAGS.test_tfrecords,
