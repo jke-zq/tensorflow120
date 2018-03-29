@@ -119,6 +119,15 @@ def train(global_step):
         return train_op, loss, acc
 
 
+class _QueueHook(tf.train.SessionRunHook):
+    def __init__(self, enqueue_op):
+        self.op = enqueue_op
+
+    def end(self, session):
+        session.run(self.op)
+        tf.logging.info('kill_ps_enqueue_op done....')
+
+
 class Training(object):
     def __init__(self):
         # distribution check
@@ -158,7 +167,8 @@ class Training(object):
                                                      "/job:worker/task:%d" % FLAGS.task_index],
                                      log_device_placement=False)
         sess_config.gpu_options.allow_growth = True
-        hooks = [tf.train.StopAtStepHook(num_steps=FLAGS.total_step)]
+        hooks = [tf.train.StopAtStepHook(num_steps=FLAGS.total_step),
+                 _QueueHook(self.kill_ps_queue.enqueue(1))]
         self.sess = tf.train.MonitoredTrainingSession(
                 master=self.server.target,
                 is_chief=self.is_chief,
@@ -216,23 +226,15 @@ class Training(object):
                   FLAGS.task_index)
 
         b_time = time.time()
-        kill_ps_enqueue_op = self.kill_ps_queue.enqueue(1)
         self.create_session_wrapper()
-        try:
-            while not self.sess.should_stop():
-                with self.sess as sess:
-                    time.sleep(1)
-                    print('=======================================')
-                    _, loss_val, acc_val, step = sess.run([train_op, loss, acc,
-                                                           global_step])
-                    print('global_step:%s, cost_time:%s, loss:%s, acc:%s' % (
-                        step, time.time() - b_time, loss_val, acc_val))
-        except Exception as e:
-            print(e)
-        finally:
-            # fixbug: using tf.train.SessionRunHook and end(session)
-            self.sess.run(kill_ps_enqueue_op)
-            print('kill_ps_enqueue_op done....')
+        while not self.sess.should_stop():
+            with self.sess as sess:
+                time.sleep(1)
+                print('=======================================')
+                _, loss_val, acc_val, step = sess.run([train_op, loss, acc,
+                                                       global_step])
+                print('global_step:%s, cost_time:%s, loss:%s, acc:%s' % (
+                    step, time.time() - b_time, loss_val, acc_val))
         print('Done!!')
 
 
