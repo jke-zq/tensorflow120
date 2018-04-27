@@ -2,9 +2,13 @@
 一般来说，模型会在训练数据集上训练出满意的 loss 值之后，再在验证数据集中验证其泛化能力。    
 但有些算法工程师可能更愿意在训练数据集上进行训练的同时，不断的抽查目前模型在验证数据集上的效果。    
 
-那么能否在工程上实现呢？答案是肯定的。除了 TensorFlow 的 DataSet 提供的灵活的切换数据集的能力，还有另外一种方式。即使用 SubGraph 的方式来实现，而且这种方式对现有程序改动很小，且不需要学习新的 API 。        
+那么能否在工程上实现呢？答案是肯定的。总共有三种方式：
 
-本文主要介绍 TensorFlow 分布式训练如何在 chief worker 上切换数据集以及统计打印训练吞吐量的信息，包括
+1. DataSet 切换
+2. SubGraph 切换
+3. Estimator 的 evaluator worker
+
+下面将分别介绍这三种方式，并给出具体的实现思路。
 
 * DataSet
 	* from_string_handle
@@ -14,6 +18,9 @@
 	* SubGraph
 	* SubGraph 的具体实现
     * DataSet 的数据切换简介
+* Estimator
+	* chief, worker, evaluator
+	* 实现
 
 示例代码为：
 
@@ -27,7 +34,8 @@ DataSet 的切换方式有好几种，下面简述两种方式：
 from_structure 是可重新初始化的迭代器。需要事先获取初始化操作，并在切换 DataSet 的时候进行初始化操作。更多详细信息可参见文档【数据集和估算器】。    
 但这种方式有一个问题，每次初始化操作完成后，数据都是从头开始读取。一旦切换数据集，都会从切换到的数据集的开头开始读取，并不会从上次读取的位置继续开始。虽然这种方式简单，但是考虑到它的灵活性不好，遂放弃。在能满足你的需求的情况下，建议优先考虑这种方式，因为简单易于理解，并且 TensorFlow 支持完善。    
 
-from_string_handle 是另外一种可选取的方式。相对于 from_structure 的每次切换数据集都从头开始读取，这种方式能够灵活的从上次读取的位置继续读取，并且切换的方式通过 feed_dict 的方式来进行，并不需要每次切换前都要进行初始化操作。    
+from_string_handle 是另外一种可选取的方式。相对于 from_structure 的每次切换数据集都从头开始读取，这种方式能够灵活的从上次读取的位置继续读取，并且切换的方式通过 feed_dict 的方式来进行，并不需要每次切换前都要进行初始化操作。 
+   
 ### from_string_handle
 使用的方式如下：    
 
@@ -119,4 +127,75 @@ with sess:
 	if condition and self.is_chief:
 		sess.run([valid_loss, valid_acc])
 ~~~
+
+## Estimator
+Estimator 属于 TensorFlow 的高级 API 。只要配置好 TF_CONFIG 环境变量，就可以将单机训练任务无缝变成分布式训练任务。在 TF_CONFIG 中，会有各种角色，其中 evaluator 角色负责间歇性的加载 checkpoint 文件，并执行 eval 任务（即在验证数据集上进行泛化能力验证）。
+
+因此，如果使用 Estimator 的话，只要启动 evaluator job 就可以在训练的同时，间歇性的验证模型在验证数据集上的泛化能力了。
+
+这种方式的好处也很明显，就是在不干扰训练的情况下，另起一个 job 来进行。
+### ps, chief, worker, evaluator
+
+* ps ：parameter server job
+* chief ：master worker job ，负责初始化变量、保存模型等任务
+* worker ：slave worker job ，只负责训练任务
+* evaluator ：evaluator job ，负责加载模型，在验证数据集上在 loss 计算。
+
+
+
+### evaluator 具体实现
+我通常的做法是，在下面各个 server 上依次启动：
+
+~~~
+ # server0 --> [ps]：
+python main.py --ps_hosts=server0 --worker_hosts=server1,server2,server3 --job_name=ps --task_index=0
+ # server1 --> [chief]：
+python main.py --ps_hosts=server0 --worker_hosts=server1,server2,server3 --job_name=worker --task_index=0
+ # server2 --> [worker]:
+python main.py --ps_hosts=server0 --worker_hosts=server1,server2,server3 --job_name=worker --task_index=1
+ # server3 --> [evaluator]:
+python main.py --ps_hosts=server0 --worker_hosts=server1,server2,server3 --job_name=worker --task_index=2
+~~~
+
+生成和设置 TF_CONFIG 的代码如下：
+
+~~~
+ps_hosts = FLAGS.ps_hosts.split(",")
+worker_hosts = FLAGS.worker_hosts.split(",")
+assert len(worker_hosts) > 2, 'workers shoule be more than two.'
+chief_hosts = worker_hosts[0:1]
+worker_hosts = worker_hosts[1:]
+print('Chief host is :%s' % chief_hosts)
+print('PS hosts are: %s' % ps_hosts)
+print('Worker hosts are: %s' % worker_hosts[-1:])
+if FLAGS.job_name == 'worker' and FLAGS.task_index > 0:
+    job_name = FLAGS.job_name
+    task_index = FLAGS.task_index - 1
+elif FLAGS.job_name == 'worker' and FLAGS.task_index == 0:
+    job_name = 'chief'
+    task_index = 0
+else:
+    job_name = FLAGS.job_name
+    task_index = FLAGS.task_index
+if FLAGS.job_name == 'worker' and task_index == len(worker_hosts) - 1:
+    job_name = 'evaluator'
+    task_index = 0
+worker_hosts = worker_hosts[:-1]
+print('job_name : %s' % job_name)
+print('task_index : %d' % task_index)
+cluster = {'chief': chief_hosts, "ps": ps_hosts,
+                "worker": worker_hosts}
+os.environ['TF_CONFIG'] = json.dumps(
+        {'cluster': cluster,
+         'task': {'type': job_name, 
+                  'index': task_index}})
+~~~
+
+
+
+
+
+
+
+
 
