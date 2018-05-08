@@ -66,7 +66,7 @@ class DSHandleHook(tf.train.SessionRunHook):
         if self.train_str is not None:
             self.train_handle, self.valid_handle = session.run([self.train_str,
                                                                 self.valid_str])
-        tf.logging.info('session run ds string-handle done....')
+        print('session run ds string-handle done....')
 
 
 def main(_):
