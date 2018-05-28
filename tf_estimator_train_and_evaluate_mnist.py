@@ -24,6 +24,7 @@ flags.DEFINE_string("ps_hosts", "localhost:2222", "Comma-separated list of hostn
 flags.DEFINE_string("worker_hosts", "localhost:2223,localhost:2224", "Comma-separated list of hostname:port pairs")
 flags.DEFINE_string("job_name", None, "job name: worker, evaluator or ps")
 flags.DEFINE_integer("task_index", None, '')
+flags.DEFINE_boolean("local", False, '')
 
 
 FLAGS = flags.FLAGS
@@ -43,29 +44,31 @@ tf.logging.set_verbosity(tf.logging.DEBUG)
 #         raise ValueError("Must specify an explicit `test_tfrecords`")
 
 
-def get_config():
-
-    ps_hosts = FLAGS.ps_hosts.split(',')
-    worker_hosts = FLAGS.worker_hosts.split(',')
-    chief_hosts, worker_hosts = worker_hosts[:1], worker_hosts[1:]
-    cluster = {'chief': chief_hosts,
-               'ps': ps_hosts,
-               'worker': worker_hosts}
-    task_index = FLAGS.task_index
-    if FLAGS.job_name == 'worker' and FLAGS.task_index == 0:
-        job_name = 'chief'
-    else:
-        job_name = FLAGS.job_name
-    if FLAGS.job_name == 'worker' and FLAGS.task_index > 0:
-        task_index -= 1
-    else:
+def get_config(local=False):
+    if not local:
+        print('distributed training...')
+        ps_hosts = FLAGS.ps_hosts.split(',')
+        worker_hosts = FLAGS.worker_hosts.split(',')
+        chief_hosts, worker_hosts = worker_hosts[:1], worker_hosts[1:]
+        cluster = {'chief': chief_hosts,
+                   'ps': ps_hosts,
+                   'worker': worker_hosts}
         task_index = FLAGS.task_index
-    os.environ['TF_CONFIG'] = json.dumps(
-        {'cluster': cluster,
-         'task': {'type': job_name, 'index': task_index}})
-    # config = tf.estimator.RunConfig()
-    print('-----run config---------------')
-    print(os.environ['TF_CONFIG'])
+        if FLAGS.job_name == 'worker' and FLAGS.task_index == 0:
+            job_name = 'chief'
+        else:
+            job_name = FLAGS.job_name
+        if FLAGS.job_name == 'worker' and FLAGS.task_index > 0:
+            task_index -= 1
+        else:
+            task_index = FLAGS.task_index
+        os.environ['TF_CONFIG'] = json.dumps(
+            {'cluster': cluster,
+             'task': {'type': job_name, 'index': task_index}})
+        print('-----run config---------------')
+        print(os.environ['TF_CONFIG'])
+    else:
+        print('local training...')
     return tf.estimator.RunConfig(save_checkpoints_steps=10)
 
 
@@ -124,7 +127,7 @@ def create_validate_input_fun(input_fun):
 
 
 def main(_):
-    config = get_config()
+    config = get_config(local=FLAGS.local)
     feature_columns = [tf.feature_column.numeric_column('image', shape=784)]
     estimator = tf.estimator.DNNClassifier(
         feature_columns=feature_columns,
