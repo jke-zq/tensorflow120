@@ -18,8 +18,8 @@ import json
 import tensorflow as tf
 
 flags = tf.app.flags
-flags.DEFINE_string("train_tfrecords", 'train.tfrecords', "Path for the train tfrecords file")
-flags.DEFINE_string("test_tfrecords", 'test.tfrecords', "Path for the train tfrecords file")
+flags.DEFINE_string("train_tfrecords", './raw_data/train.tfrecords', "Path for the train tfrecords file")
+flags.DEFINE_string("test_tfrecords", './raw_data/test.tfrecords', "Path for the train tfrecords file")
 flags.DEFINE_string("ps_hosts", "localhost:2222", "Comma-separated list of hostname:port pairs")
 flags.DEFINE_string("worker_hosts", "localhost:2223,localhost:2224", "Comma-separated list of hostname:port pairs")
 flags.DEFINE_string("job_name", None, "job name: worker, evaluator or ps")
