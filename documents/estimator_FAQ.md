@@ -1,6 +1,6 @@
 # 概述
 本文介绍 Estimator 的常见问题。    
-由于本人在工作中大力推广 Estimator + Dataset 的方式来实现分布式训练，同时帮忙排查了些问题，变将其记录下来。
+由于本人在工作中大力推广 Estimator + Dataset 的方式来实现分布式训练，同时帮忙排查问题，便在此将其记录下来。
 
 ## Evaluator 的 停止条件
 问题描述：分布式情况下，使用 tf.estimator.train_and_evaluate 来训练任务，为什么 evaluator 不退出。    
