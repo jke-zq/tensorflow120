@@ -2,11 +2,13 @@
 '''
 usages(acting like using tf.train.Supervisor):
     for ps:
-        python .py --job_name='ps' --task_index=0 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
+        python .py --job_name='ps' --task_index=0 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3,host4:port4' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
     for worker_01(chief):
-        python .py --job_name='worker' --task_index=0 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
+        python .py --job_name='worker' --task_index=0 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3,host4:port4' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
     for worer_02:
-        python .py --job_name='worker' --task_index=1 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
+        python .py --job_name='worker' --task_index=1 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3,host4:port4' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
+    for worer_03(evaluator):
+        python .py --job_name='worker' --task_index=1 --ps_hosts='host1:port1' --worker_hosts='host2:port3,host3:port3,host4:port4' --train_tfrecords='train.tfrecords' --test_tfrecords='test.tfrecords'
 
 '''
 # -*- coding: utf-8 -*-
@@ -47,24 +49,37 @@ tf.logging.set_verbosity(tf.logging.DEBUG)
 def get_config(local=False):
     if not local:
         print('distributed training...')
-        ps_hosts = FLAGS.ps_hosts.split(',')
-        worker_hosts = FLAGS.worker_hosts.split(',')
-        chief_hosts, worker_hosts = worker_hosts[:1], worker_hosts[1:]
-        cluster = {'chief': chief_hosts,
-                   'ps': ps_hosts,
-                   'worker': worker_hosts}
-        task_index = FLAGS.task_index
-        if FLAGS.job_name == 'worker' and FLAGS.task_index == 0:
+        ps_hosts = FLAGS.ps_hosts.split(",")
+        worker_hosts = FLAGS.worker_hosts.split(",")
+        assert len(worker_hosts) > 2, 'workers should be more than two.'
+        chief_hosts = worker_hosts[0:1]
+        worker_hosts = worker_hosts[1:]
+        tf.logging.info('Chief host is :%s' % chief_hosts)
+        tf.logging.info('PS hosts are: %s' % ps_hosts)
+        tf.logging.info('Worker hosts are: %s' % worker_hosts[:-1])
+        tf.logging.info('eval hosts are: %s' % worker_hosts[-1:])
+        if FLAGS.job_name == 'worker' and FLAGS.task_index > 0:
+            job_name = FLAGS.job_name
+            task_index = FLAGS.task_index - 1
+        elif FLAGS.job_name == 'worker' and FLAGS.task_index == 0:
             job_name = 'chief'
+            task_index = 0
         else:
             job_name = FLAGS.job_name
-        if FLAGS.job_name == 'worker' and FLAGS.task_index > 0:
-            task_index -= 1
-        else:
             task_index = FLAGS.task_index
+
+        if FLAGS.job_name == 'worker' and task_index == len(worker_hosts) - 1:
+            job_name = 'evaluator'
+            task_index = 0
+        worker_hosts = worker_hosts[:-1]
+
+        tf.logging.info('job_name : %s' % job_name)
+        tf.logging.info('task_index : %d' % task_index)
+        cluster = {'chief': chief_hosts, "ps": ps_hosts,
+                        "worker": worker_hosts}
         os.environ['TF_CONFIG'] = json.dumps(
-            {'cluster': cluster,
-             'task': {'type': job_name, 'index': task_index}})
+                {'cluster': cluster,
+                 'task': {'type': job_name, 'index': task_index}})
         print('-----run config---------------')
         print(os.environ['TF_CONFIG'])
     else:
@@ -135,10 +150,13 @@ def main(_):
         n_classes=10,
         model_dir='./estimator_model_dir/',
         config=config)
-    train_input_fn = create_input_fun(FLAGS.train_tfrecords, repeat_count=2)
+    train_input_fn = create_input_fun(FLAGS.train_tfrecords,
+                                      repeat_count=-1)
     eval_input_fn = create_input_fun(FLAGS.test_tfrecords, repeat_count=1, perform_shuffle=False)
-    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn, max_steps=100)
-    eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn)
+    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn,
+                                        max_steps=100)
+    eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn,
+                                      start_delay_secs=5, throttle_secs=10)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
 if __name__ == '__main__':
