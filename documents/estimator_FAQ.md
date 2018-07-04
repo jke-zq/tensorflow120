@@ -24,4 +24,6 @@ while True:
 	
 ~~~
 
-## PS 是如何停止的
+## 自动退出 PS
+Evaluator 能够在合适条件下退出，但是 PS 是不能够退出的。    
+如果直接使用 MonitorTrainingSession 来实现分布式，可以通过同步队列的方式来实现 PS 的自动退出，具体可见  `dist_mnist_sync_multi_gpus_in_each_worker.py` 。
