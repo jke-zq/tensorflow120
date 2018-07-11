@@ -27,8 +27,8 @@
 ### 如何加快通信？
 硬件驱动部分：使用 RDMA 、 GpuDirect （ GDR )、Nvlink等，提高通信速度，取代 TCP 。    
 模型软件部分：梯度压缩，矩阵分解，通信计算overlap等。    
-![gdr](../documents/pics/GPUDirect_comp.JPG)
-![rdma](../documents/pics/rdma.png)
+<img src='../documents/pics/GPUDirect_comp.JPG'/>
+<img src='../documents/pics/rdma.png'/>
 
 [如何理解Nvidia英伟达的Multi-GPU多卡通信框架NCCL](https://www.zhihu.com/question/63219175/answer/206697974)    
 [TensorFlow分布式训练加速之梯度压缩](https://zhuanlan.zhihu.com/p/32016451)    
