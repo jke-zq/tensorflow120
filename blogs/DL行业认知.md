@@ -25,8 +25,11 @@
 分布式训练的瓶颈在于通信。TensorFlow 自带的分布式通信方式是 PS 。目前更好的通信方式是 ring-all-reduce 。    
 要想提高分布式训练速度，就要努力提高 计算/通信比。
 ### 如何加快通信？
-硬件驱动部分：使用 RDMA 、 GpuDirect （ GDR )等，提高通信速度，取到 TCP 。    
+硬件驱动部分：使用 RDMA 、 GpuDirect （ GDR )、Nvlink等，提高通信速度，取代 TCP 。    
 模型软件部分：梯度压缩，矩阵分解，通信计算overlap等。    
+![gdr](../documents/pics/GPUDirect_comp.JPG)
+![rdma](../documents/pics/rdma.png)
+
 [如何理解Nvidia英伟达的Multi-GPU多卡通信框架NCCL](https://www.zhihu.com/question/63219175/answer/206697974)    
 [TensorFlow分布式训练加速之梯度压缩](https://zhuanlan.zhihu.com/p/32016451)    
 [TensorFlow分布式训练：任意比例压缩通信时间](https://weibo.com/ttarticle/p/show?id=2309404198999161722650)    
